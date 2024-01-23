@@ -2,30 +2,43 @@ import express from "express";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import { tokenVerification } from "../middlewares/auth.js";
+import { JWT_SECRET } from "../config.js";
+import { z } from "zod";
 
 const router = express.Router();
 
+const userSchema = z.object({
+  userName: z.string().trim().toLowerCase().min(5).max(30),
+  firstName: z.string(),
+  lastName: z.string(),
+  password: z.string().min(6),
+});
+
+//Sign In Route
 router.post("/signin", async (req, res) => {
   try {
-    const { firstName, lastName, password } = req.body;
+    const { userName, firstName, lastName, password } = userSchema.parse(
+      req.body
+    );
 
-    const existingUser = await User.findOne({ firstName, lastName });
+    const existingUser = await User.findOne({ userName });
     if (existingUser) {
       return res
         .status(400)
         .json({ success: false, error: "user already exists" });
     }
+
     const newUser = await new User({
+      userName,
       firstName,
       lastName,
       password,
     }).save();
 
-    const token = jwt.sign({ firstName }, "paytm");
+    const token = jwt.sign({ userName }, JWT_SECRET);
 
     res.status(201).json({
       success: true,
-      newUser,
       token,
       message: "Congratulations! Your account has been created successfully.",
     });
@@ -34,11 +47,12 @@ router.post("/signin", async (req, res) => {
   }
 });
 
+//Sign up Route
 router.post("/signup", tokenVerification, async (req, res) => {
   try {
-    const { firstName } = req.body;
+    const { userName } = userSchema.parse(req.body);
 
-    const existingUser = await User.findOne({ firstName });
+    const existingUser = await User.findOne({ userName });
 
     if (!existingUser) {
       return res
@@ -46,11 +60,10 @@ router.post("/signup", tokenVerification, async (req, res) => {
         .json({ success: false, error: "user already exists" });
     }
 
-    const token = jwt.sign({ firstName }, "paytm");
+    const token = jwt.sign({ userName }, JWT_SECRET);
 
     res.status(201).json({
       success: true,
-      existingUser,
       token,
       message: `Welcome back ${existingUser.name}`,
     });
@@ -59,10 +72,13 @@ router.post("/signup", tokenVerification, async (req, res) => {
   }
 });
 
+// User update Route for Firstname, Lastname & Password
 router.put("/update/:fname", tokenVerification, async (req, res) => {
   const { fname } = req.params;
-  const { firstName, lastName, password } = req.body;
-  const existingUser = await User.findOne({ firstName: fname });
+  const { userName, firstName, lastName, password } = userSchema.parse(
+    req.body
+  );
+  const existingUser = await User.findOne({ userName: fname });
 
   if (!existingUser) {
     return res
@@ -70,12 +86,12 @@ router.put("/update/:fname", tokenVerification, async (req, res) => {
       .json({ success: false, error: "user already exists" });
   }
   const updateUser = await User.updateOne(
-    { firstName: fname },
-    { $set: { firstName, lastName, password } }
+    { userName: fname },
+    { $set: { userName, firstName, lastName, password } }
   );
   res.status(201).json({
     success: true,
-    updateUser,
+    message: "updated Successfuuly",
   });
 });
 export default router;

@@ -1,9 +1,18 @@
 import mongoose from "mongoose";
 
 const userSchema = mongoose.Schema({
+  userName: {
+    type: String,
+    unique: true,
+    required: true,
+    trim: true,
+    lowercase: true,
+    minLength: 5,
+    maxLength: 30,
+  },
   firstName: {
     type: String,
-    unique:true,
+    unique: true,
     required: true,
   },
   lastName: {
@@ -13,6 +22,7 @@ const userSchema = mongoose.Schema({
   password: {
     type: String,
     required: true,
+    minLength: 6,
   },
 });
 

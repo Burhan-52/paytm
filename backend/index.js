@@ -1,19 +1,18 @@
 import express from "express";
 import connectToMongo from "./db.js";
 import userRouter from "./routes/user.js";
-import bodyParser from "body-parser";
+import { PORT } from "./config.js";
+import cors from "cors"
 
 const app = express();
 
-const port = 8000;
-
+app.use(cors());
 app.use(express.json());
-app.use(bodyParser.json());
 
 connectToMongo();
 
-app.use("/", userRouter);
+app.use("/api/v1", userRouter);
 
-app.listen(port, () => {
-  console.log(`Your app is running port number ${port}`);
+app.listen(PORT, () => {
+  console.log(`Your app is running port number ${PORT}`);
 });
