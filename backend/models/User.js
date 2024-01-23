@@ -12,7 +12,6 @@ const userSchema = mongoose.Schema({
   },
   firstName: {
     type: String,
-    unique: true,
     required: true,
   },
   lastName: {

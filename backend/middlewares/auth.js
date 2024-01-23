@@ -2,14 +2,20 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config.js";
 
 export const tokenVerification = (req, res, next) => {
-  const token = req.headers.authorization;
-  const verifyToken = jwt.verify(token, JWT_SECRET, function (err, decoded) {
-    if (err) {
-      return res.json({
-        message: "Invalid token",
-      });
-    } else {
-      next();
-    }
-  });
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(403).json({ message: "token format is not proper" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (err) {
+    console.log(err);
+    return res.status(403).json({ err });
+  }
 };
